@@ -12,3 +12,5 @@ conf/model_providers.yaml
 .DS_Store
 *.log
 models/
+saved_blends.json
+tts_text_accumulator.json
