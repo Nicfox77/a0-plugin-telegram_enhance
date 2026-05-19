@@ -1,0 +1,664 @@
+<html>
+<head>
+    <title>Voice Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script type="module" src="/usr/plugins/telegram_enhance/webui/voice-lab-store.js"></script>
+    <script type="module">
+        import { store as notifStore } from "/components/notifications/notification-store.js";
+        window.toastFrontendSuccess = (msg) => notifStore.frontendSuccess(msg);
+        window.toastFrontendError = (msg) => notifStore.frontendError(msg);
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg-secondary, #1a1a2e);
+            color: var(--color-text, #e0e0e0);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .modal-section { margin-bottom: 20px; }
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-secondary, #888);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .section-desc {
+            font-size: 12px;
+            color: var(--color-text-secondary, #666);
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--color-bg, #16213e);
+            border: 1px solid var(--color-border, #2a2a3e);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .card-title .material-symbols-outlined { font-size: 18px; color: var(--color-primary, #6c63ff); }
+
+        /* Voice grid */
+        .voice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 6px;
+            max-height: 240px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        .voice-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            border: 1px solid var(--color-border, #2a2a3e);
+            background: var(--color-bg-secondary, #1a1a2e);
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .voice-chip:hover {
+            border-color: var(--color-primary, #6c63ff);
+            background: rgba(108, 99, 255, 0.05);
+        }
+        .voice-chip.selected {
+            border-color: var(--color-primary, #6c63ff);
+            background: rgba(108, 99, 255, 0.15);
+            color: #fff;
+        }
+        .voice-chip .chip-check {
+            font-size: 16px;
+            color: var(--color-primary, #6c63ff);
+        }
+        .voice-chip .chip-label {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.3;
+        }
+        .voice-chip .chip-name { font-weight: 500; }
+        .voice-chip .chip-info {
+            font-size: 10px;
+            color: var(--color-text-secondary, #888);
+        }
+
+        /* Weight slider row */
+        .blend-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: var(--color-bg-secondary, #1a1a2e);
+            border: 1px solid var(--color-border, #2a2a3e);
+            margin-bottom: 6px;
+        }
+        .blend-voice-name {
+            font-size: 13px;
+            font-weight: 600;
+            min-width: 100px;
+            flex-shrink: 0;
+        }
+        .blend-slider-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .blend-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--color-border, #2a2a3e);
+            outline: none;
+            cursor: pointer;
+        }
+        .blend-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--color-primary, #6c63ff);
+            cursor: pointer;
+        }
+        .blend-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--color-primary, #6c63ff);
+            cursor: pointer;
+            border: none;
+        }
+        .blend-weight-val {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            min-width: 38px;
+            text-align: right;
+            color: var(--color-primary, #6c63ff);
+        }
+        .blend-remove {
+            background: none;
+            border: none;
+            color: var(--color-text-secondary, #888);
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            transition: all 0.15s;
+        }
+        .blend-remove:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .blend-remove .material-symbols-outlined { font-size: 18px; }
+
+        /* Weight bar */
+        .weight-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .weight-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--color-border, #2a2a3e);
+            border-radius: 3px;
+            overflow: hidden;
+            display: flex;
+        }
+        .weight-bar-segment {
+            height: 100%;
+            transition: width 0.2s;
+        }
+        .weight-bar-total {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 38px;
+            text-align: right;
+        }
+        .weight-bar-total.ok { color: #22c55e; }
+        .weight-bar-total.over { color: #ef4444; }
+        .weight-bar-total.under { color: #eab308; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn .material-symbols-outlined { font-size: 16px; }
+        .btn-primary {
+            background: var(--color-primary, #6c63ff);
+            color: #fff;
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: rgba(108, 99, 255, 0.1);
+            color: var(--color-primary, #6c63ff);
+            border: 1px solid rgba(108, 99, 255, 0.3);
+        }
+        .btn-secondary:hover { background: rgba(108, 99, 255, 0.2); }
+        .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* Input fields */
+        .input-field {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border, #2a2a3e);
+            background: var(--color-bg-secondary, #1a1a2e);
+            color: var(--color-text, #e0e0e0);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .input-field:focus { border-color: var(--color-primary, #6c63ff); }
+        .input-field::placeholder { color: var(--color-text-secondary, #555); }
+        textarea.input-field { resize: vertical; min-height: 60px; font-family: inherit; }
+
+        .field-label {
+            font-size: 12px;
+            color: var(--color-text-secondary, #888);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .field-group { margin-bottom: 10px; }
+
+        /* Speed slider */
+        .speed-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .speed-val {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-primary, #6c63ff);
+            min-width: 36px;
+        }
+
+        /* Audio player */
+        .audio-player {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(108, 99, 255, 0.08), rgba(108, 99, 255, 0.03));
+            border: 1px solid rgba(108, 99, 255, 0.2);
+        }
+        .play-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--color-primary, #6c63ff);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .play-btn:hover { transform: scale(1.05); }
+        .play-btn .material-symbols-outlined { font-size: 22px; }
+        .audio-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .audio-info-text { font-size: 12px; color: var(--color-text-secondary, #888); }
+        .audio-info-duration { font-size: 13px; font-weight: 600; }
+
+        /* Saved blends list */
+        .blend-list { display: flex; flex-direction: column; gap: 6px; }
+        .blend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border, #2a2a3e);
+            background: var(--color-bg-secondary, #1a1a2e);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .blend-item:hover {
+            border-color: var(--color-primary, #6c63ff);
+            background: rgba(108, 99, 255, 0.05);
+        }
+        .blend-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .blend-item-name { font-size: 13px; font-weight: 600; }
+        .blend-item-voices { font-size: 11px; color: var(--color-text-secondary, #888); }
+        .blend-item-actions { display: flex; gap: 4px; }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Error message */
+        .error-msg {
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        /* Search input */
+        .search-wrap {
+            position: relative;
+            margin-bottom: 8px;
+        }
+        .search-wrap .material-symbols-outlined {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            color: var(--color-text-secondary, #888);
+        }
+        .search-wrap .input-field { padding-left: 32px; }
+
+        /* Two column layout on wider screens */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 700px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
+
+        /* Color palette for weight bar segments */
+        .seg-0 { background: #6c63ff; }
+        .seg-1 { background: #22c55e; }
+        .seg-2 { background: #f59e0b; }
+        .seg-3 { background: #ef4444; }
+        .seg-4 { background: #06b6d4; }
+        .seg-5 { background: #ec4899; }
+        .seg-6 { background: #8b5cf6; }
+        .seg-7 { background: #14b8a6; }
+        .seg-8 { background: #f97316; }
+        .seg-9 { background: #64748b; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: var(--color-text-secondary, #666);
+            font-size: 13px;
+        }
+        .empty-state .material-symbols-outlined {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+    <div x-data>
+    <template x-if="$store.voiceLabStore">
+        <div x-init="$store.voiceLabStore.onOpen()" x-destroy="$store.voiceLabStore.cleanup()">
+        <template x-if="$store.voiceLabStore.loaded">
+            <div>
+                <!-- Header -->
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+                    <span class="material-symbols-outlined" style="font-size:24px;color:var(--color-primary,#6c63ff);">graphic_eq</span>
+                    <div>
+                        <div style="font-size:18px;font-weight:700;">Voice Lab</div>
+                        <div style="font-size:12px;color:var(--color-text-secondary,#888);">Blend, experiment & save custom Kokoro voices</div>
+                    </div>
+                </div>
+
+                <!-- Error display -->
+                <div x-show="$store.voiceLabStore.errorMsg" class="error-msg" x-text="$store.voiceLabStore.errorMsg"></div>
+
+                <div class="two-col">
+                    <!-- LEFT COLUMN -->
+                    <div>
+                        <!-- Voice Selector -->
+                        <div class="card">
+                            <div class="card-title">
+                                <span class="material-symbols-outlined">record_voice_over</span>
+                                Available Voices
+                                <span style="font-size:11px;color:var(--color-text-secondary,#888);font-weight:400;" x-text="'(' + $store.voiceLabStore.voices.length + ' loaded)'"></span>
+                            </div>
+                            <div class="search-wrap">
+                                <span class="material-symbols-outlined">search</span>
+                                <input type="text" class="input-field" placeholder="Search voices..."
+                                    x-model="$store.voiceLabStore.searchQuery" />
+                            </div>
+                            <div class="voice-grid">
+                                <template x-for="voice in $store.voiceLabStore.filteredVoices" :key="voice">
+                                    <div class="voice-chip"
+                                         :class="{ selected: $store.voiceLabStore.isSelected(voice) }"
+                                         @click="$store.voiceLabStore.isSelected(voice) || $store.voiceLabStore.addVoice(voice)">
+                                        <span class="chip-label">
+                                            <span class="chip-name" x-text="voice"></span>
+                                            <span class="chip-info" x-text="$store.voiceLabStore._voiceDesc(voice)"></span>
+                                        </span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Saved Blends -->
+                        <div class="card">
+                            <div class="card-title">
+                                <span class="material-symbols-outlined">library_music</span>
+                                Saved Blends
+                                <span style="font-size:11px;color:var(--color-text-secondary,#888);font-weight:400;" x-text="'(' + $store.voiceLabStore.savedBlends.length + ')'"></span>
+                            </div>
+                            <template x-if="$store.voiceLabStore.savedBlends.length === 0">
+                                <div class="empty-state">
+                                    <span class="material-symbols-outlined">blend</span>
+                                    No saved blends yet. Create one below!
+                                </div>
+                            </template>
+                            <div class="blend-list">
+                                <template x-for="blend in $store.voiceLabStore.savedBlends" :key="blend.name">
+                                    <div class="blend-item">
+                                        <div class="blend-item-info" @click="$store.voiceLabStore.loadBlend(blend)">
+                                            <span class="blend-item-name" x-text="blend.display_name || blend.name"></span>
+                                            <span class="blend-item-voices" x-text="blend.voices.map(v => v.name + ' ' + v.weight + '%').join(' + ')"></span>
+                                        </div>
+                                        <div class="blend-item-actions">
+                                            <button class="btn btn-sm btn-secondary" @click="$store.voiceLabStore.loadBlend(blend)" title="Load into editor">
+                                                <span class="material-symbols-outlined" style="font-size:14px;">upload</span>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" @click="$store.voiceLabStore.deleteBlend(blend.name)" title="Delete blend">
+                                                <span class="material-symbols-outlined" style="font-size:14px;">delete</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN -->
+                    <div>
+                        <!-- Blend Editor -->
+                        <div class="card">
+                            <div class="card-title">
+                                <span class="material-symbols-outlined">tune</span>
+                                Blend Editor
+                            </div>
+
+                            <template x-if="$store.voiceLabStore.selectedVoices.length === 0">
+                                <div class="empty-state">
+                                    <span class="material-symbols-outlined">touch_app</span>
+                                    Click voices from the left panel to add them to your blend
+                                </div>
+                            </template>
+
+                            <!-- Weight bar visualization -->
+                            <template x-if="$store.voiceLabStore.selectedVoices.length > 0">
+                                <div class="weight-bar-wrap">
+                                    <div class="weight-bar">
+                                        <template x-for="(voice, idx) in $store.voiceLabStore.selectedVoices" :key="'bar-'+voice.name">
+                                            <div class="weight-bar-segment"
+                                                 :class="'seg-' + (idx % 10)"
+                                                 :style="'width:' + voice.weight + '%'"
+                                                 :title="voice.name + ': ' + voice.weight + '%'"></div>
+                                        </template>
+                                    </div>
+                                    <span class="weight-bar-total"
+                                          :class="$store.voiceLabStore.weightStatus"
+                                          x-text="$store.voiceLabStore.totalWeight + '%'"
+                                          :title="$store.voiceLabStore.weightStatus === 'ok' ? 'Weights sum to 100%' : $store.voiceLabStore.weightStatus === 'over' ? 'Over 100% - will normalize' : 'Under 100% - will normalize'"></span>
+                                </div>
+                            </template>
+
+                            <!-- Per-voice sliders -->
+                            <template x-for="(voice, idx) in $store.voiceLabStore.selectedVoices" :key="voice.name">
+                                <div class="blend-row">
+                                    <span class="blend-voice-name" x-text="voice.name"></span>
+                                    <div class="blend-slider-wrap">
+                                        <input type="range" class="blend-slider"
+                                            min="0" max="100" step="1"
+                                            :value="voice.weight"
+                                            @input="$store.voiceLabStore.updateWeight(idx, parseInt($event.target.value))" />
+                                        <span class="blend-weight-val" x-text="voice.weight + '%'" ></span>
+                                    </div>
+                                    <button class="blend-remove" @click="$store.voiceLabStore.removeVoice(idx)" title="Remove">
+                                        <span class="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                            </template>
+
+                            <!-- Redistribute button -->
+                            <template x-if="$store.voiceLabStore.selectedVoices.length > 1">
+                                <div style="margin-top:6px;">
+                                    <button class="btn btn-sm btn-secondary" @click="$store.voiceLabStore._redistributeEven()">
+                                        <span class="material-symbols-outlined" style="font-size:14px;">balance</span>
+                                        Equalize Weights
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Sample Text & Speed -->
+                        <div class="card">
+                            <div class="card-title">
+                                <span class="material-symbols-outlined">text_fields</span>
+                                Sample Text
+                            </div>
+                            <div class="field-group">
+                                <textarea class="input-field" rows="2"
+                                    x-model="$store.voiceLabStore.sampleText"
+                                    placeholder="Enter text to speak..."></textarea>
+                            </div>
+                            <div class="field-label">Speed</div>
+                            <div class="speed-row">
+                                <span style="font-size:11px;color:var(--color-text-secondary,#888);">0.5x</span>
+                                <input type="range" class="blend-slider"
+                                    min="0.5" max="2.0" step="0.05"
+                                    x-model.number="$store.voiceLabStore.speed" />
+                                <span style="font-size:11px;color:var(--color-text-secondary,#888);">2.0x</span>
+                                <span class="speed-val" x-text="$store.voiceLabStore.speed.toFixed(2) + 'x'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Generate & Play -->
+                        <div class="card">
+                            <div class="btn-group" style="margin-bottom:12px;">
+                                <button class="btn btn-primary"
+                                    :disabled="$store.voiceLabStore.isGenerating || $store.voiceLabStore.selectedVoices.length === 0"
+                                    @click="$store.voiceLabStore.generateSample()">
+                                    <template x-if="$store.voiceLabStore.isGenerating">
+                                        <span class="spinner"></span>
+                                    </template>
+                                    <template x-if="!$store.voiceLabStore.isGenerating">
+                                        <span class="material-symbols-outlined">play_arrow</span>
+                                    </template>
+                                    <span x-text="$store.voiceLabStore.isGenerating ? 'Generating...' : 'Generate Sample'"></span>
+                                </button>
+                            </div>
+
+                            <!-- Audio player -->
+                            <template x-if="$store.voiceLabStore.generatedAudio">
+                                <div class="audio-player">
+                                    <button class="play-btn" @click="$store.voiceLabStore.playAudio()">
+                                        <span class="material-symbols-outlined">play_arrow</span>
+                                    </button>
+                                    <div class="audio-info">
+                                        <span class="audio-info-duration" x-text="($store.voiceLabStore.audioDuration || 0).toFixed(1) + 's'"></span>
+                                        <span class="audio-info-text" x-text="'Format: ' + ($store.voiceLabStore.audioFormat || 'mp3').toUpperCase()"></span>
+                                    </div>
+                                    <button class="btn btn-sm btn-secondary" @click="$store.voiceLabStore.stopPlayback()">
+                                        <span class="material-symbols-outlined" style="font-size:14px;">stop</span>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Save Blend -->
+                        <div class="card">
+                            <div class="card-title">
+                                <span class="material-symbols-outlined">save</span>
+                                Save Blend
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <input type="text" class="input-field" style="flex:1;"
+                                    x-model="$store.voiceLabStore.saveName"
+                                    placeholder="e.g. my_custom_voice"
+                                    @keydown.enter="$store.voiceLabStore.saveBlend()" />
+                                <button class="btn btn-primary"
+                                    :disabled="$store.voiceLabStore.isSaving || !$store.voiceLabStore.saveName.trim() || $store.voiceLabStore.selectedVoices.length === 0"
+                                    @click="$store.voiceLabStore.saveBlend()">
+                                    <template x-if="$store.voiceLabStore.isSaving">
+                                        <span class="spinner"></span>
+                                    </template>
+                                    <template x-if="!$store.voiceLabStore.isSaving">
+                                        <span class="material-symbols-outlined">save</span>
+                                    </template>
+                                    <span x-text="$store.voiceLabStore.isSaving ? 'Saving...' : 'Save'"></span>
+                                </button>
+                            </div>
+                            <div style="font-size:11px;color:var(--color-text-secondary,#666);margin-top:6px;">
+                                Saved blends become available as voices in the TTS settings and Telegram /tts_voice command.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Loading state -->
+        <template x-if="!$store.voiceLabStore.loaded">
+            <div style="text-align:center;padding:40px;color:var(--color-text-secondary,#888);">
+                <span class="spinner" style="width:24px;height:24px;border-width:3px;"></span>
+                <div style="margin-top:12px;">Loading voices...</div>
+            </div>
+        </template>
+        </div>
+    </template>
+</div>
+</body>
+</html>

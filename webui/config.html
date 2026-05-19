@@ -1,0 +1,419 @@
+<html>
+<head>
+    <title>Voice Transcription &amp; TTS</title>
+</head>
+
+<body>
+    <div x-data>
+        <template x-if="config">
+            <div>
+                <!-- STT Section -->
+                <div class="section-title">Speech-to-Text (Transcription)</div>
+                <div class="section-description">
+                    Transcribe voice messages received via Telegram using your preferred STT provider.
+                </div>
+
+                <div class="field">
+                    <div class="field-label">
+                        <div class="field-title">STT Provider</div>
+                        <div class="field-description">
+                            Provider for transcribing voice messages.
+                        </div>
+                    </div>
+                    <div class="field-control">
+                        <select x-model="config.stt_provider">
+                            <option value="openai">OpenAI Whisper</option>
+                            <option value="xai">X.ai Grok STT</option>
+                            <option value="parakeet">Local Parakeet ONNX (CPU)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- OpenAI STT settings -->
+                <template x-if="config.stt_provider === 'openai' || !config.stt_provider">
+                    <div>
+                        <div class="field">
+                            <div class="field-label">
+                                <div class="field-title">OpenAI Model</div>
+                                <div class="field-description">
+                                    Whisper model name (default: whisper-1).
+                                </div>
+                            </div>
+                            <div class="field-control">
+                                <input type="text" x-model="config.openai_model"
+                                    placeholder="whisper-1" />
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="field-label">
+                                <div class="field-title">OpenAI API Key</div>
+                                <div class="field-description">
+                                    Falls back to OPENAI_API_KEY environment variable if empty.
+                                </div>
+                            </div>
+                            <div class="field-control">
+                                <input type="password" x-model="config.openai_api_key"
+                                    placeholder="sk-..." />
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- X.ai STT settings -->
+                <template x-if="config.stt_provider === 'xai'">
+                    <div>
+                        <div class="field">
+                            <div class="field-label">
+                                <div class="field-title">X.ai API Key</div>
+                                <div class="field-description">
+                                    Your xAI API key. Falls back to XAI_API_KEY environment variable if empty.
+                                </div>
+                            </div>
+                            <div class="field-control">
+                                <input type="password" x-model="config.xai_api_key"
+                                    placeholder="xai-..." />
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Parakeet STT settings -->
+                <template x-if="config.stt_provider === 'parakeet'">
+                    <div>
+                        <div class="field">
+                            <div class="field-label">
+                                <div class="field-title">Parakeet Model</div>
+                                <div class="field-description">
+                                    onnx-asr model identifier. Downloads from HuggingFace on first use.
+                                    Default: nemo-parakeet-tdt-0.6b-v3 (multilingual, CPU-optimized).
+                                    Requires: onnxruntime, onnx-asr, soundfile.
+                                </div>
+                            </div>
+                            <div class="field-control">
+                                <input type="text" x-model="config.parakeet_model"
+                                    placeholder="nemo-parakeet-tdt-0.6b-v3" />
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Shared STT settings -->
+                <div class="field">
+                    <div class="field-label">
+                        <div class="field-title">Language</div>
+                        <div class="field-description">
+                            Language hint for transcription (e.g. "en", "es"). Leave empty for auto-detection.
+                        </div>
+                    </div>
+                    <div class="field-control">
+                        <input type="text" x-model="config.language"
+                            placeholder="auto-detect" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="field-label">
+                        <div class="field-title">Keyterms</div>
+                        <div class="field-description">
+                            Custom words/phrases to bias STT transcription (comma-separated).
+                            Supported by OpenAI (as prompt) and X.ai (as keyterm). Not supported by Parakeet.
+                        </div>
+                    </div>
+                    <div class="field-control">
+                        <input type="text" x-model="config.keyterms_text"
+                            x-init="if (!config.keyterms_text && config.keyterms) config.keyterms_text = config.keyterms.join(', ')"
+                            @change="config.keyterms = config.keyterms_text ? config.keyterms_text.split(',').map(s => s.trim()).filter(Boolean) : []"
+                            placeholder="Agent Zero, Kubernetes, WebSocket" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="field-label">
+                        <div class="field-title">Keep original audio attachment</div>
+                        <div class="field-description">
+                            If enabled, the audio file remains attached after transcription.
+                        </div>
+                    </div>
+                    <div class="field-control">
+                        <label class="toggle">
+                            <input type="checkbox"
+                                x-model="config.include_original_attachment"
+                                x-init="if (config.include_original_attachment === undefined || config.include_original_attachment === null) config.include_original_attachment = true" />
+                            <span class="toggler"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- TTS Section -->
+                <div class="section-title" style="margin-top: 24px;">Text-to-Speech (Voice Responses)</div>
+                <div class="section-description">
+                    Automatically convert agent text responses to voice messages on Telegram.
+                </div>
+
+                <div class="field">
+                    <div class="field-label">
+                        <div class="field-title">Enable TTS Responses</div>
+                        <div class="field-description">
+                            When enabled, the agent's text responses are also sent as voice messages.
+                            Can be toggled per-chat with /tts command in Telegram.
+                        </div>
+                    </div>
+                    <div class="field-control">
+                        <label class="toggle">
+                            <input type="checkbox"
+                                x-model="config.tts_enabled"
+                                x-init="if (config.tts_enabled === undefined || config.tts_enabled === null) config.tts_enabled = false" />
+                            <span class="toggler"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <template x-if="config.tts_enabled">
+                    <div>
+                        <div class="field">
+                            <div class="field-label">
+                                <div class="field-title">TTS Provider</div>
+                                <div class="field-description">
+                                    Provider for generating voice responses.
+                                </div>
+                            </div>
+                            <div class="field-control">
+                                <select x-model="config.tts_provider">
+                                    <option value="kokoro">Kokoro ONNX (Local CPU)</option>
+                                    <option value="openai">OpenAI TTS</option>
+                                    <option value="edge_tts">Edge TTS (Free)</option>
+                                    <option value="neutts">NeuTTS Air (Neuphonic)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Kokoro TTS settings -->
+                        <template x-if="config.tts_provider === 'kokoro' || !config.tts_provider">
+                            <div>
+                                <div class="field">
+                                    <div class="field-label">
+                                        <div class="field-title">Kokoro Voice</div>
+                                        <div class="field-description">
+                                            Voice for Kokoro TTS. Local CPU inference, no API key needed.
+                                        </div>
+                                    </div>
+                                    <div class="field-control">
+                                        <select x-model="config.kokoro_voice">
+                                            <option value="af_sky">Sky (Female, US)</option>
+                                            <option value="af_bella">Bella (Female, US)</option>
+                                            <option value="af_nicole">Nicole (Female, US)</option>
+                                            <option value="af_sarah">Sarah (Female, US)</option>
+                                            <option value="am_adam">Adam (Male, US)</option>
+                                            <option value="am_michael">Michael (Male, US)</option>
+                                            <option value="bf_emma">Emma (Female, UK)</option>
+                                            <option value="bf_isabella">Isabella (Female, UK)</option>
+                                            <option value="bm_george">George (Male, UK)</option>
+                                            <option value="bm_lewis">Lewis (Male, UK)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">
+                                        <div class="field-title">Speed</div>
+                                        <div class="field-description">
+                                            Speech speed multiplier (default: 1.0).
+                                        </div>
+                                    </div>
+                                    <div class="field-control">
+                                        <input type="number" x-model="config.kokoro_speed"
+                                            placeholder="1.0" step="0.1" min="0.5" max="3.0" />
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        <div class="field-title">Language</div>
+                                        <div class="field-description">
+                                            Language variant for pronunciation.
+                                        </div>
+                                    </div>
+                                    <div class="field-control">
+                                        <select x-model="config.kokoro_lang">
+                                            <option value="en-us">English (US)</option>
+                                            <option value="en-gb">English (UK)</option>
+                                            <option value="fr-fr">French</option>
+                                            <option value="ja">Japanese</option>
+                                            <option value="ko">Korean</option>
+                                            <option value="zh">Chinese</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- OpenAI TTS settings -->
+                        <template x-if="config.tts_provider === 'openai'">
+                            <div>
+                                <div class="field">
+                                    <div class="field-label">
+                                        <div class="field-title">OpenAI TTS Model</div>
+                                        <div class="field-description">
+                                            TTS model name (default: tts-1).
+                                        </div>
+                                    </div>
+                                    <div class="field-control">
+                                        <input type="text" x-model="config.tts_openai_model"
+                                            placeholder="tts-1" />
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        <div class="field-title">OpenAI TTS Voice</div>
+                                        <div class="field-description">
+                                            Voice for TTS output. Options: alloy, echo, fable, onyx, nova, shimmer.
+                                        </div>
+                                    </div>
+                                    <div class="field-control">
+                                        <select x-model="config.tts_openai_voice">
+                                            <option value="alloy">Alloy</option>
+                                            <option value="echo">Echo</option>
+                                            <option value="fable">Fable</option>
+                                            <option value="onyx">Onyx</option>
+                                            <option value="nova">Nova</option>
+                                            <option value="shimmer">Shimmer</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        <div class="field-title">TTS API Key</div>
+                                        <div class="field-description">
+                                            Falls back to OpenAI API key or OPENAI_API_KEY env var if empty.
+                                        </div>
+                                    </div>
+                                    <div class="field-control">
+                                        <input type="password" x-model="config.tts_api_key"
+                                            placeholder="Uses OpenAI key if empty" />
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Edge TTS settings -->
+                        <template x-if="config.tts_provider === 'edge_tts'">
+                            <div>
+                                <div class="field">
+                                    <div class="field-label">
+                                        <div class="field-title">Edge TTS Voice</div>
+                                        <div class="field-description">
+                                            Microsoft Edge TTS voice name. No API key required (free).
+                                            Examples: en-US-AvaNeural, en-US-AndrewNeural, en-US-EmmaNeural.
+                                        </div>
+                                    </div>
+                                    <div class="field-control">
+                                        <input type="text" x-model="config.tts_edge_voice"
+                                            placeholder="en-US-AvaNeural" />
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- NeuTTS settings -->
+                        <template x-if="config.tts_provider === 'neutts'">
+                            <div>
+                                <div class="field">
+                                    <div class="field-label">
+                                        <div class="field-title">NeuTTS Model</div>
+                                        <div class="field-description">
+                                            HuggingFace model repo. Use neuphonic/neutts-air-q4-gguf for quantized (smaller, faster).
+                                        </div>
+                                    </div>
+                                    <div class="field-control">
+                                        <input type="text" x-model="config.neutts_model"
+                                            placeholder="neuphonic/neutts-air" />
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        <div class="field-title">Device</div>
+                                        <div class="field-description">
+                                            Compute device (default: cpu).
+                                        </div>
+                                    </div>
+                                    <div class="field-control">
+                                        <input type="text" x-model="config.neutts_device"
+                                            placeholder="cpu" />
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        <div class="field-title">Reference Audio (Voice Cloning)</div>
+                                        <div class="field-description">
+                                            Path to reference audio file for voice cloning. Leave empty for default voice.
+                                        </div>
+                                    </div>
+                                    <div class="field-control">
+                                        <input type="text" x-model="config.neutts_ref_audio"
+                                            placeholder="/path/to/reference.wav" />
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        <div class="field-title">Reference Text</div>
+                                        <div class="field-description">
+                                            Transcript of the reference audio. Required when using voice cloning.
+                                        </div>
+                                    </div>
+                                    <div class="field-control">
+                                        <input type="text" x-model="config.neutts_ref_text"
+                                            placeholder="Transcript of reference audio" />
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Audio Management Settings -->
+                        <div class="section-title" style="margin-top: 16px;">Audio Management</div>
+
+                        <div class="field">
+                            <div class="field-label">
+                                <div class="field-title">Audio Cleanup</div>
+                                <div class="field-description">
+                                    Delete previous TTS audio messages before sending new ones. Prevents audio pileup from auto-playing multiple clips. When disabled, all audio clips are preserved.
+                                </div>
+                            </div>
+                            <div class="field-control">
+                                <label class="toggle">
+                                    <input type="checkbox"
+                                        x-model="config.audio_cleanup"
+                                        x-init="if (config.audio_cleanup === undefined || config.audio_cleanup === null) config.audio_cleanup = true" />
+                                    <span class="toggler"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="field-label">
+                                <div class="field-title">Audio Consolidation</div>
+                                <div class="field-description">
+                                    Combine multiple response messages within a turn into one audio clip. When disabled, each response gets its own separate audio clip.
+                                </div>
+                            </div>
+                            <div class="field-control">
+                                <label class="toggle">
+                                    <input type="checkbox"
+                                        x-model="config.audio_consolidation"
+                                        x-init="if (config.audio_consolidation === undefined || config.audio_consolidation === null) config.audio_consolidation = true" />
+                                    <span class="toggler"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</body>
+
+</html>

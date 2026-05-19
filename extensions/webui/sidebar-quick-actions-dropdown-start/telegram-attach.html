@@ -1,0 +1,12 @@
+<!-- Telegram Attach -->
+<div x-data>
+  <button
+    x-move-after=".quick-actions-dropdown .dropdown-header + .dropdown-item"
+    class="dropdown-item"
+    id="telegram-attach-dropdown"
+    title="Attach to Telegram"
+    @click="openModal('/usr/plugins/telegram_enhance/webui/telegram-attach.html'); dropdownOpen = false">
+    <span class="material-symbols-outlined">smartphone</span>
+    <span>Attach to Telegram</span>
+  </button>
+</div>

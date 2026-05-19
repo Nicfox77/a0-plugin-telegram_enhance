@@ -1,0 +1,11 @@
+name: telegram_enhance
+title: Telegram Enhance
+description: >-
+  Transcribes Telegram voice messages using multiple STT providers (OpenAI, X.ai, Parakeet)
+  and responds with TTS voice messages (Kokoro, OpenAI, Edge TTS, NeuTTS Air).
+  Includes per-chat voice controls and Telegram slash commands.
+version: 3.0.0
+settings_sections:
+  - agent
+per_project_config: false
+per_agent_config: false

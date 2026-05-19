@@ -1,0 +1,454 @@
+<html>
+<head>
+    <title>Attach to Telegram</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script type="module">
+        import { store } from "/usr/plugins/telegram_enhance/webui/telegram-attach-store.js";
+        import { store as notifStore } from "/components/notifications/notification-store.js";
+        window.toastFrontendSuccess = (msg) => notifStore.frontendSuccess(msg);
+        window.toastFrontendError = (msg) => notifStore.frontendError(msg);
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg-secondary, #1a1a2e);
+            color: var(--color-text, #e0e0e0);
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .modal-section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-secondary, #888);
+            margin-bottom: 8px;
+        }
+        .section-description {
+            font-size: 13px;
+            color: var(--color-text-secondary, #888);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .chat-info-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--color-bg-secondary, #1a1a2e);
+            border: 1px solid var(--color-border, #2a2a3e);
+            border-radius: 8px;
+        }
+        .chat-info-left {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .chat-name {
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .context-id {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 11px;
+            color: var(--color-text-secondary, #888);
+        }
+        .copy-btn-sm {
+            background: none;
+            border: none;
+            color: var(--color-text-secondary, #888);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            transition: all 0.15s;
+        }
+        .copy-btn-sm:hover {
+            color: var(--color-primary, #6c63ff);
+            background: rgba(108, 99, 255, 0.1);
+        }
+
+        /* Attach command hero */
+        .attach-hero {
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(108, 99, 255, 0.08), rgba(108, 99, 255, 0.03));
+            border: 1px solid var(--color-border, #2a2a3e);
+            border-radius: 10px;
+            text-align: center;
+        }
+        .attach-hero-label {
+            font-size: 12px;
+            color: var(--color-text-secondary, #888);
+            margin-bottom: 10px;
+        }
+        .attach-command {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 10px 20px;
+            background: var(--color-bg-secondary, #1a1a2e);
+            border: 1px solid var(--color-border, #2a2a3e);
+            border-radius: 8px;
+            word-break: break-all;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-primary {
+            background: var(--color-primary, #6c63ff);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+        .btn .material-symbols-outlined {
+            font-size: 16px;
+        }
+        .copy-hero-btn {
+            margin-top: 14px;
+        }
+
+        /* Steps */
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--color-text-secondary, #888);
+        }
+        .step-num {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--color-primary, #6c63ff);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .step-text {
+            line-height: 1.4;
+        }
+
+        /* Linked status */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-radius: 8px;
+        }
+        .status-bar.linked {
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+        }
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-dot.on { background: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.5); }
+        .status-dot.off { background: var(--color-text-secondary, #555); }
+        .status-label {
+            font-size: 13px;
+        }
+        .status-detail {
+            font-size: 11px;
+            color: var(--color-text-secondary, #888);
+        }
+
+        /* Sessions list */
+        .sessions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .session-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: var(--color-bg-secondary, #1a1a2e);
+            border: 1px solid var(--color-border, #2a2a3e);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .session-item:hover {
+            border-color: var(--color-primary, #6c63ff);
+            background: rgba(108, 99, 255, 0.04);
+        }
+        .session-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .session-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .session-meta {
+            font-size: 11px;
+            color: var(--color-text-secondary, #888);
+        }
+
+        /* All chats collapsible */
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 13px;
+            color: var(--color-text-secondary, #888);
+            padding: 8px 0;
+        }
+        .collapsible-header:hover {
+            color: var(--color-text, #e0e0e0);
+        }
+        .collapsible-header .material-symbols-outlined {
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+        .collapsible-header.open .material-symbols-outlined {
+            transform: rotate(90deg);
+        }
+        .chats-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .chat-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .chat-item.current {
+            background: rgba(108, 99, 255, 0.06);
+        }
+        .chat-item-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chat-item .status-dot {
+            width: 6px;
+            height: 6px;
+        }
+
+        /* Loading / empty */
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            color: var(--color-text-secondary, #888);
+        }
+        .loading-spinner .material-symbols-outlined {
+            animation: spin 1s linear infinite;
+            font-size: 24px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .divider {
+            height: 1px;
+            background: var(--color-border, #2a2a3e);
+            margin: 16px 0;
+        }
+        .mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div x-data>
+        <template x-if="$store.telegramAttachStore">
+            <div x-init="$store.telegramAttachStore.onOpen()" x-destroy="$store.telegramAttachStore.cleanup()">
+
+                <!-- Loading state -->
+                <div class="loading-spinner" x-show="!$store.telegramAttachStore.loaded">
+                    <span class="material-symbols-outlined">progress_activity</span>
+                </div>
+
+                <!-- 1. Current Chat Info -->
+                <div class="modal-section" x-show="$store.telegramAttachStore.loaded">
+                    <div class="chat-info-bar">
+                        <div class="chat-info-left">
+                            <span class="chat-name" x-text="$store.telegramAttachStore.chatName || 'Untitled Chat'"></span>
+                            <span class="context-id" x-text="$store.telegramAttachStore.contextId"></span>
+                        </div>
+                        <button class="copy-btn-sm"
+                                @click="$store.telegramAttachStore.copyText($store.telegramAttachStore.contextId, 'Context ID')"
+                                title="Copy context ID">
+                            <span class="material-symbols-outlined" style="font-size:16px">content_copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Linked Status (shown if linked) -->
+                <div class="modal-section"
+                     x-show="$store.telegramAttachStore.loaded && $store.telegramAttachStore.telegramLinked"
+                     style="display:none">
+                    <div class="status-bar linked">
+                        <div class="status-left">
+                            <div class="status-dot on"></div>
+                            <div>
+                                <div class="status-label">Linked to Telegram</div>
+                                <div class="status-detail">
+                                    <span x-text="'Bot: ' + $store.telegramAttachStore.linkedBotName"></span>
+                                    <span x-show="$store.telegramAttachStore.linkedUsername"
+                                          style="margin-left:8px"
+                                          x-text="'User: @' + $store.telegramAttachStore.linkedUsername"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-danger"
+                                @click="$store.telegramAttachStore.detachChat()"
+                                :disabled="$store.telegramAttachStore.detaching">
+                            <span class="material-symbols-outlined">link_off</span>
+                            <span x-text="$store.telegramAttachStore.detaching ? 'Detaching...' : 'Detach'"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Attach Command (shown if NOT linked) -->
+                <div class="modal-section"
+                     x-show="$store.telegramAttachStore.loaded && !$store.telegramAttachStore.telegramLinked"
+                     style="display:none">
+                    <div class="attach-hero">
+                        <div class="attach-hero-label">Send this command to your Telegram bot</div>
+                        <div class="attach-command">
+                            <span x-text="$store.telegramAttachStore.attachCommand"></span>
+                        </div>
+                        <button class="btn btn-primary copy-hero-btn"
+                                @click="$store.telegramAttachStore.copyText($store.telegramAttachStore.attachCommand, 'Command')">
+                            <span class="material-symbols-outlined">content_copy</span>
+                            Copy Command
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4. Steps guide (shown if NOT linked) -->
+                <div class="modal-section"
+                     x-show="$store.telegramAttachStore.loaded && !$store.telegramAttachStore.telegramLinked"
+                     style="display:none">
+                    <div class="section-title">How to attach</div>
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-num">1</div>
+                            <div class="step-text">Copy the command above</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-num">2</div>
+                            <div class="step-text">Open Telegram and find your bot</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-num">3</div>
+                            <div class="step-text">Paste and send the command</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-num">4</div>
+                            <div class="step-text" style="color:var(--color-primary, #6c63ff); font-weight:500;">Done — this chat is now linked!</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Active Sessions (other linked chats) -->
+                <div class="modal-section"
+                     x-show="$store.telegramAttachStore.activeSessions.length > 0"
+                     style="display:none">
+                    <div class="divider"></div>
+                    <div class="section-title">Active Telegram Sessions</div>
+                    <div class="section-description">Click a session to redirect it to this chat</div>
+                    <div class="sessions-list">
+                        <template x-for="session in $store.telegramAttachStore.activeSessions" :key="session.id">
+                            <div class="session-item"
+                                 @click="$store.telegramAttachStore.redirectSession(session)">
+                                <div class="session-info">
+                                    <span class="material-symbols-outlined" style="font-size:16px;color:#22c55e;">link</span>
+                                    <span class="session-name" x-text="session.name || session.id"></span>
+                                </div>
+                                <div class="session-meta">
+                                    <span x-text="'@' + (session.telegram_username || 'user')"></span>
+                                    <span style="margin-left:6px" x-text="session.telegram_bot"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- 6. All Chats (collapsible) -->
+                <div class="modal-section"
+                     x-show="$store.telegramAttachStore.allChats.length > 0"
+                     style="display:none">
+                    <div class="divider"></div>
+                    <div class="collapsible-header"
+                         :class="{ open: $store.telegramAttachStore.showAllChats }"
+                         @click="$store.telegramAttachStore.showAllChats = !$store.telegramAttachStore.showAllChats">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                        <span x-text="'All Chats (' + $store.telegramAttachStore.allChats.length + ')'"></span>
+                    </div>
+                    <div class="chats-list" x-show="$store.telegramAttachStore.showAllChats" style="display:none">
+                        <template x-for="chat in $store.telegramAttachStore.allChats" :key="chat.id">
+                            <div class="chat-item" :class="{ current: chat.id === $store.telegramAttachStore.contextId }">
+                                <div class="chat-item-left">
+                                    <div class="status-dot" :class="chat.linked ? 'on' : 'off'"></div>
+                                    <span x-text="chat.name || chat.id"></span>
+                                    <span x-show="chat.id === $store.telegramAttachStore.contextId"
+                                          style="font-size:11px;color:var(--color-primary)">(this chat)</span>
+                                </div>
+                                <span style="font-size:11px;color:var(--color-text-secondary)"
+                                      x-text="chat.linked ? 'Linked' : ''"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+        </template>
+    </div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<!-- Voice Lab -->
+<div x-data>
+  <button
+    x-move-after="#telegram-attach-dropdown"
+    class="dropdown-item"
+    id="voice-lab-dropdown"
+    title="Voice Lab - Blend & experiment with Kokoro voices"
+    @click="openModal('/usr/plugins/telegram_enhance/webui/voice-lab.html'); dropdownOpen = false">
+    <span class="material-symbols-outlined">graphic_eq</span>
+    <span>Voice Lab</span>
+  </button>
+</div>

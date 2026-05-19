@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+config.json
+tts_state.json
+tts_msg_ids.json
+tts_heard_state.json
+voices_custom.npz
+escalation_log.jsonl
+*.onnx
+conf/model_providers.yaml
+.DS_Store
+*.log
+models/

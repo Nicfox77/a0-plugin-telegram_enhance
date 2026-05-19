@@ -1,0 +1,104 @@
+[
+  {
+    "name": "test__mix",
+    "voices": [
+      {
+        "name": "af_heart",
+        "weight": 41
+      },
+      {
+        "name": "jf_alpha",
+        "weight": 20
+      },
+      {
+        "name": "af_aoede",
+        "weight": 14
+      },
+      {
+        "name": "af_nicole",
+        "weight": 11
+      },
+      {
+        "name": "ff_siwis",
+        "weight": 14
+      }
+    ],
+    "display_name": "test  mix"
+  },
+  {
+    "name": "test2",
+    "voices": [
+      {
+        "name": "af_heart",
+        "weight": 62
+      },
+      {
+        "name": "jf_alpha",
+        "weight": 28
+      },
+      {
+        "name": "af_nicole",
+        "weight": 10
+      }
+    ],
+    "display_name": "test2"
+  },
+  {
+    "name": "test3",
+    "voices": [
+      {
+        "name": "af_heart",
+        "weight": 58
+      },
+      {
+        "name": "jf_alpha",
+        "weight": 22
+      },
+      {
+        "name": "if_sara",
+        "weight": 20
+      }
+    ],
+    "display_name": "test3"
+  },
+  {
+    "name": "test1",
+    "voices": [
+      {
+        "name": "af_heart",
+        "weight": 48
+      },
+      {
+        "name": "jf_alpha",
+        "weight": 23
+      },
+      {
+        "name": "af_nicole",
+        "weight": 13
+      },
+      {
+        "name": "ff_siwis",
+        "weight": 16
+      }
+    ],
+    "display_name": "test1"
+  },
+  {
+    "name": "test4",
+    "voices": [
+      {
+        "name": "af_heart",
+        "weight": 64
+      },
+      {
+        "name": "jf_alpha",
+        "weight": 14
+      },
+      {
+        "name": "zf_xiaoyi",
+        "weight": 22
+      }
+    ],
+    "display_name": "test4"
+  }
+]

@@ -1,0 +1,56 @@
+# Telegram Voice Transcription - Default Configuration (v3.0.0)
+
+# --- STT (Speech-to-Text) Settings ---
+stt_provider: parakeet  # openai, xai, parakeet
+language: null  # Language hint (null = auto-detect, e.g. "en", "es")
+include_original_attachment: true  # Keep audio file after transcription
+keyterms: []  # Custom words/phrases to bias STT, e.g. ["Agent Zero", "Kubernetes"]
+
+# OpenAI Whisper
+openai_model: whisper-1
+openai_api_key: null  # Falls back to OPENAI_API_KEY env var
+
+# X.ai Grok STT
+xai_api_key: null  # Falls back to XAI_API_KEY env var
+
+# Parakeet ONNX (local CPU)
+parakeet_model: nemo-parakeet-tdt-0.6b-v3  # onnx-asr model identifier
+
+# --- TTS (Text-to-Speech) Settings ---
+tts_enabled: false  # Enable automatic voice responses
+tts_provider: kokoro  # openai, edge_tts, kokoro, neutts
+
+# OpenAI TTS
+tts_openai_model: tts-1
+tts_openai_voice: alloy  # alloy, echo, fable, onyx, nova, shimmer
+
+# Edge TTS (free, no API key)
+tts_edge_voice: en-US-AvaNeural
+
+# Kokoro ONNX TTS (local CPU)
+kokoro_voice: custom_blend  # custom_blend (recommended), af_heart, af_bella, af_sky, af_nicole, af_sarah, am_adam, am_michael, bf_emma, bf_isabella, bm_george, bm_lewis, jf_alpha, if_sara, and more
+kokoro_speed: 1.0
+kokoro_lang: en-us  # en-us, en-gb, fr-fr, ja, ko, zh
+
+# NeuTTS Air (Neuphonic)
+neutts_model: neuphonic/neutts-air  # or neuphonic/neutts-air-q4-gguf for quantized
+neutts_device: cpu
+neutts_ref_audio: null  # path to reference audio for voice cloning
+neutts_ref_text: null   # reference transcript
+
+# Shared TTS API key (falls back to openai_api_key or OPENAI_API_KEY env var)
+tts_api_key: null
+
+# Delete previous TTS audio messages when a new one is sent (prevents auto-play pileup)
+delete_previous_tts_audio: true
+
+# --- Audio Management Settings ---
+# Audio Cleanup: Delete older TTS audio messages before new ones are sent
+# When true, previous TTS audio clips are deleted to prevent auto-play pileup
+# When false, all audio clips are preserved and never deleted
+audio_cleanup: true
+
+# Audio Consolidation: Combine multiple response messages into one audio clip
+# When true, all response messages within a turn are combined into one audio clip
+# When false, each response message gets its own separate audio clip
+audio_consolidation: true
